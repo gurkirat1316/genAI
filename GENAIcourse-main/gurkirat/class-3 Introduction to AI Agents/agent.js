@@ -29,7 +29,6 @@ async function getGithubUserInfoByUsername(username = '') {
         id: data.id,
         name: data.name,
         location: data.location,
-        twitter_username: data.twitter_username,
         public_repos: data.public_repos,
         public_gists: data.public_gists,
         user_view_type: data.user_view_type,
@@ -69,6 +68,7 @@ async function main() {
         - Always perform only one step at a time and wait for other step.
         - Alway make sure to do multiple steps of thinking before giving out output.
         - For every tool call always wait for the OBSERVE which contains the output from tool
+        - If the tool responds some error then say something went wrong
 
         Output JSON Format:
         { "step": "START | THINK | OUTPUT | OBSERVE | TOOL" , "content": "string", "tool_name": "string", "input": "STRING" }
@@ -90,14 +90,22 @@ async function main() {
             role: 'system',
             content: SYSTEM_PROMPT,
         },
-        {
-            role: 'user',
-            content: 'Give me the cuurent weather of jalandhar, delhi, chandigarh, himchal, una, nangal and patna',
-        },
         // {
         //     role: 'user',
-        //     content: 'Give me the details of gurkirat-1316 from github',
+        //     content: 'Give me the cuurent weather of jalandhar, delhi, chandigarh, himchal, una, nangal and patna',
         // },
+        // {
+        //     role: 'user',
+        //     content: 'Give me the details of gurkirat1802 from github',
+        // },
+        // {
+        //     role: 'user',
+        //     content: 'Create a basic landing page for me in html css js and make separate new folder for this',
+        // },
+        {
+            role: 'user',
+            content: 'In the current directly, read the changes via git and push the changes to github with good commit message',
+        },
     ];
 
     while (true) {

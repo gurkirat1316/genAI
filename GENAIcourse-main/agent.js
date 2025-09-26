@@ -94,8 +94,7 @@ async function main() {
     },
     {
       role: 'user',
-      content:
-        'In the current directly, read the changes via git and push the changes to github with good commit message',
+      content: 'Give me current weather of jalandahr',
     },
   ];
 
