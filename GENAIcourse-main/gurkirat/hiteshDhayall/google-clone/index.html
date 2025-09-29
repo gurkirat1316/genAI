@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Search Clone</title>
+  <link rel="preconnect" href="https://www.google.com">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar" role="banner">
+    <nav class="topnav" aria-label="Top navigation">
+      <div class="nav-left">
+        <a href="#" class="nav-link">About</a>
+        <a href="#" class="nav-link">Store</a>
+      </div>
+      <div class="nav-right">
+        <a href="https://mail.google.com/" class="nav-link">Gmail</a>
+        <a href="https://www.google.com/imghp" class="nav-link">Images</a>
+        <a href="https://accounts.google.com/signin" class="btn sign-in">Sign in</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="main" role="main">
+    <h1 class="brand" aria-label="Site brand">Search</h1>
+
+    <form id="search-form" class="search-form" action="https://www.google.com/search" method="get" role="search" aria-label="Search the web">
+      <div class="search-box">
+        <span class="search-icon" aria-hidden="true">🔎</span>
+        <input id="search-input" name="q" type="text" autocomplete="off" aria-label="Search" placeholder="Search the web" required>
+      </div>
+      <div class="actions">
+        <button id="search-button" class="btn" type="submit">Search</button>
+        <button id="lucky-button" class="btn" type="button">I'm Feeling Lucky</button>
+      </div>
+    </form>
+
+    <div class="languages" aria-label="Language options">
+      <span>Offered in: </span>
+      <a href="https://www.google.com/?hl=hi">हिन्दी</a>
+      <a href="https://www.google.com/?hl=bn">বাংলা</a>
+      <a href="https://www.google.com/?hl=te">తెలుగు</a>
+      <a href="https://www.google.com/?hl=mr">मराठी</a>
+      <a href="https://www.google.com/?hl=ta">தமிழ்</a>
+      <a href="https://www.google.com/?hl=gu">ગુજરાતી</a>
+      <a href="https://www.google.com/?hl=kn">ಕನ್ನಡ</a>
+      <a href="https://www.google.com/?hl=ml">മലയാളം</a>
+      <a href="https://www.google.com/?hl=pa">ਪੰਜਾਬੀ</a>
+    </div>
+  </main>
+
+  <footer class="footer" role="contentinfo">
+    <div class="region">India</div>
+    <div class="footer-links">
+      <div class="footer-left">
+        <a href="https://ads.google.com/">Advertising</a>
+        <a href="https://smallbusiness.withgoogle.com/">Business</a>
+        <a href="https://www.google.com/search/howsearchworks/">How Search works</a>
+      </div>
+      <div class="footer-right">
+        <a href="https://policies.google.com/privacy">Privacy</a>
+        <a href="https://policies.google.com/terms">Terms</a>
+        <a href="#">Settings</a>
+      </div>
+    </div>
+  </footer>
+
+  <noscript>
+    <p style="text-align:center;margin:16px;">JavaScript is disabled. You can still search by typing a query and pressing Enter.</p>
+  </noscript>
+
+  <script src="script.js"></script>
+</body>
+</html>
