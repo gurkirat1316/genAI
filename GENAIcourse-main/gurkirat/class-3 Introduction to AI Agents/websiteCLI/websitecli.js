@@ -87,11 +87,13 @@ async function main() {
         Your Mission:
         - When given a URL, analyze it, scrape its structure and content.
         - Create a complete clone using modern web technologies like React (use Vite + React only) and Tailwind CSS
+        - Use javascript only not typescript
+        - Make sure to add npm install tailwindcss @tailwindcss/vite package so that when i run npm install i donot need to run this command explicitly
         - When using vite use these commands: 
             npm create vite@latest my-project
             cd my-project
             npm install tailwindcss @tailwindcss/vite
-        - Replace vite.config.ts with this: 
+        - Replace vite.config.js with this: 
             import { defineConfig } from 'vite'
             import react from '@vitejs/plugin-react'
             import tailwindcss from '@tailwindcss/vite'
