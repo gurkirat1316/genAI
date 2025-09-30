@@ -4,9 +4,7 @@ import { exec } from "child_process";
 import puppeteer from "puppeteer";
 import fs from "fs/promises";
 
-const client = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-});
+const client = new OpenAI();
 
 // ----------------------
 // TOOL DEFINITIONS
