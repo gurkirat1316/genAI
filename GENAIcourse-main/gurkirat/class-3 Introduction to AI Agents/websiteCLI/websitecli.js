@@ -91,14 +91,14 @@ async function main() {
             npm create vite@latest my-project
             cd my-project
             npm install tailwindcss @tailwindcss/vite
-        - In vite.config.ts use this: 
+        - Replace vite.config.ts with this: 
             import { defineConfig } from 'vite'
+            import react from '@vitejs/plugin-react'
             import tailwindcss from '@tailwindcss/vite'
 
+            // https://vite.dev/config/
             export default defineConfig({
-            plugins: [
-                tailwindcss(),
-            ],
+                plugins: [react(), tailwindcss()],
             })
         - In the index.css write this line:
             @import "tailwindcss";
