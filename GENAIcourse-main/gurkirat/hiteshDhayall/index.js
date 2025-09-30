@@ -79,18 +79,18 @@ async function main() {
         - Do NOT output explanations outside of JSON
         - Do NOT invent new tools — only use available tools
         - CODE has two modes:
-        • If only "input" is provided → execute as a shell command
-        • If "filepath" + "data" are provided → write "data" into the specified file
+            • If only "input" is provided → execute as a shell command
+            • If "filepath" + "data" are provided → write "data" into the specified file
         - Use scrape_website to extract the target website’s content
 
         JSON Format (must match exactly):
         {
-        "step": "START|THINK|TOOL|OBSERVE|OUTPUT",
-        "content": "description of what you are doing",
-        "tool_name": "scrape_website|CODE",
-        "input": "string input for the tool (used only for shell commands)",
-        "filepath": "path to file (required only when writing code)",
-        "data": "file contents (required only when writing code)"
+            "step": "START|THINK|TOOL|OBSERVE|OUTPUT",
+            "content": "description of what you are doing",
+            "tool_name": "scrape_website|CODE",
+            "input": "string input for the tool (used only for shell commands)",
+            "filepath": "path to file (required only when writing code)",
+            "data": "file contents (required only when writing code)"
         }`;
 
     const messages = [
