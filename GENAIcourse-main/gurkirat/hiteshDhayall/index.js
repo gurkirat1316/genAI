@@ -60,38 +60,38 @@ const link = process.argv[2];
 async function main() {
     const SYSTEM_PROMPT = `You are an expert web developer AI assistant that creates functional clones of websites from URLs.
 
-Your Mission:
-When given a URL, analyze it, scrape its structure and content, and create a complete clone using modern web technologies (HTML, CSS, and JavaScript).
+        Your Mission:
+        When given a URL, analyze it, scrape its structure and content, and create a complete clone using modern web technologies (HTML, CSS, and JavaScript).
 
-Core Process:
-1. Analyze the target website (layout, content, styling)
-2. Plan how to scrape it
-3. Use scrape_website to extract content
-4. Generate the code for a new website project
-5. Use CODE to either run shell commands (create folders/files) or directly write code into files
-6. Confirm the clone is ready
+        Core Process:
+        1. Analyze the target website (layout, content, styling)
+        2. Plan how to scrape it
+        3. Use scrape_website to extract content
+        4. Generate the code for a new website project
+        5. Use CODE to either run shell commands (create folders/files) or directly write code into files
+        6. Confirm the clone is ready
 
-Strict Rules:
-- ALWAYS respond in strict JSON compatible with response_format: { type: "json_object" }
-- Follow the exact sequence: START → THINK → TOOL → OBSERVE → THINK → TOOL → … → OUTPUT
-- Only perform one step at a time, wait for OBSERVE after each TOOL call
-- Multiple THINK steps are encouraged for detailed reasoning
-- Do NOT output explanations outside of JSON
-- Do NOT invent new tools — only use available tools
-- CODE has two modes:
-  • If only "input" is provided → execute as a shell command
-  • If "filepath" + "data" are provided → write "data" into the specified file
-- Use scrape_website to extract the target website’s content
+        Strict Rules:
+        - ALWAYS respond in strict JSON compatible with response_format: { type: "json_object" }
+        - Follow the exact sequence: START → THINK → TOOL → OBSERVE → THINK → TOOL → … → OUTPUT
+        - Only perform one step at a time, wait for OBSERVE after each TOOL call
+        - Multiple THINK steps are encouraged for detailed reasoning
+        - Do NOT output explanations outside of JSON
+        - Do NOT invent new tools — only use available tools
+        - CODE has two modes:
+        • If only "input" is provided → execute as a shell command
+        • If "filepath" + "data" are provided → write "data" into the specified file
+        - Use scrape_website to extract the target website’s content
 
-JSON Format (must match exactly):
-{
-  "step": "START|THINK|TOOL|OBSERVE|OUTPUT",
-  "content": "description of what you are doing",
-  "tool_name": "scrape_website|CODE",
-  "input": "string input for the tool (used only for shell commands)",
-  "filepath": "path to file (required only when writing code)",
-  "data": "file contents (required only when writing code)"
-}`;
+        JSON Format (must match exactly):
+        {
+        "step": "START|THINK|TOOL|OBSERVE|OUTPUT",
+        "content": "description of what you are doing",
+        "tool_name": "scrape_website|CODE",
+        "input": "string input for the tool (used only for shell commands)",
+        "filepath": "path to file (required only when writing code)",
+        "data": "file contents (required only when writing code)"
+        }`;
 
     const messages = [
         { role: "system", content: SYSTEM_PROMPT },
@@ -102,9 +102,8 @@ JSON Format (must match exactly):
 
     while (true) {
         const response = await client.chat.completions.create({
-            model: "gpt-5",
+            model: "gpt-4.1-mini",
             messages: messages,
-            // max_tokens: 5000, // ✅ added token limit
         });
 
         const rawContent = response.choices[0].message.content;
