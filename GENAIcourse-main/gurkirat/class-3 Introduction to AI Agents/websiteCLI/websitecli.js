@@ -257,9 +257,9 @@ async function downloadFile(fileUrl, destPath, timeout = 30000) {
     try {
         // Ensure directory exists
         await mkdirp(path.dirname(destPath));
-        
+
         const writer = createWriteStream(destPath);
-        
+
         const response = await axios({
             method: "get",
             url: fileUrl,
@@ -291,7 +291,7 @@ function resolveUrl(base, relative) {
             const baseUrl = new URL(base);
             return `${baseUrl.protocol}${relative}`;
         }
-        
+
         return new URL(relative, base).href;
     } catch {
         return null;
@@ -302,37 +302,70 @@ function resolveUrl(base, relative) {
 async function processAssets($, baseUrl, selector, attribute, outputDir, assetType) {
     const elements = $(selector).toArray();
     console.log(`Processing ${elements.length} ${assetType} assets...`);
-    
+
     const downloaded = new Set();
-    
+
     for (const element of elements) {
         const assetUrl = $(element).attr(attribute);
         if (!assetUrl) continue;
-        
+
         const absoluteUrl = resolveUrl(baseUrl, assetUrl.trim());
         if (!absoluteUrl) {
             console.warn(`⚠️ Skipping invalid URL: ${assetUrl}`);
             continue;
         }
-        
+
         // Avoid downloading duplicates
         if (downloaded.has(absoluteUrl)) continue;
         downloaded.add(absoluteUrl);
-        
+
         try {
             const urlObj = new URL(absoluteUrl);
-            const filename = sanitizeFilename(path.basename(urlObj.pathname) || `asset-${Date.now()}`);
+
+            // Get base filename without query params
+            let baseFilename = urlObj.pathname.split('/').pop() || `asset-${Date.now()}`;
+
+            // Remove query params if any
+            if (baseFilename.includes("?")) {
+                baseFilename = baseFilename.split("?")[0];
+            }
+
+            // Sanitize filename
+            baseFilename = sanitizeFilename(baseFilename);
+
+            // Force file extension for images to .jpg or .jpeg
+            let filename = baseFilename;
+
+            if (assetType === "images") {
+                // Force .jpg extension, remove any existing extension
+                filename = filename.replace(/\.[^/.]+$/, "") + ".jpg";
+            }
+
+            // For CSS files, avoid .css.css
+            if (assetType === "css") {
+                if (!filename.endsWith(".css")) {
+                    filename += ".css";
+                }
+            }
+
+            // For JS files, ensure .js extension
+            if (assetType === "js") {
+                if (!filename.endsWith(".js")) {
+                    filename += ".js";
+                }
+            }
+
             const outputPath = path.join(outputDir, filename);
-            
+
             // Skip if already downloaded
             try {
                 await fs.access(outputPath);
                 console.log(`✓ Already exists: ${filename}`);
                 continue;
-            } catch {}
-            
+            } catch { }
+
             const result = await downloadFile(absoluteUrl, outputPath);
-            
+
             if (result.success) {
                 console.log(`✅ Downloaded: ${filename}`);
                 // Update element's attribute to point to local file
@@ -349,7 +382,7 @@ async function processAssets($, baseUrl, selector, attribute, outputDir, assetTy
 // Main cloning function
 async function cloneWebsite(url, outputDir = "cloned-site") {
     console.log(`\n🚀 Starting to clone: ${url}\n`);
-    
+
     // Create output directories
     const dirs = {
         root: outputDir,
@@ -359,51 +392,51 @@ async function cloneWebsite(url, outputDir = "cloned-site") {
         scripts: path.join(outputDir, "assets", "js"),
         fonts: path.join(outputDir, "assets", "fonts")
     };
-    
+
     for (const dir of Object.values(dirs)) {
         await mkdirp(dir);
     }
-    
+
     // Launch browser
     const browser = await puppeteer.launch({
         headless: "new",
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
-    
+
     try {
         const page = await browser.newPage();
         await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
-        
+
         console.log("📄 Fetching page content...");
         await page.goto(url, {
             waitUntil: ["networkidle0", "domcontentloaded"],
             timeout: 60000
         });
-        
+
         // Get page content and load into cheerio
         const html = await page.content();
         const $ = cheerio.load(html, { decodeEntities: false });
-        
+
         // Process different types of assets
         console.log("\n🖼️ Downloading images...");
         await processAssets($, url, "img", "src", dirs.images, "images");
         await processAssets($, url, "img", "data-src", dirs.images, "images");
-        
+
         console.log("\n🎨 Downloading stylesheets...");
         await processAssets($, url, "link[rel='stylesheet']", "href", dirs.styles, "css");
-        
+
         console.log("\n📜 Downloading scripts...");
         await processAssets($, url, "script[src]", "src", dirs.scripts, "js");
-        
+
         // Save the modified HTML
         const finalHtml = $.html({ decodeEntities: false });
         const indexPath = path.join(outputDir, "index.html");
         await fs.writeFile(indexPath, finalHtml, "utf-8");
-        
+
         console.log(`\n✅ Website cloned successfully!\n`);
         console.log(`📁 Output directory: ${path.resolve(outputDir)}`);
         console.log(`📂 Open ${indexPath} in your browser to view the cloned site\n`);
-        
+
     } catch (err) {
         console.error(`\n❌ Error cloning website: ${err.message}\n`);
     } finally {
@@ -418,7 +451,7 @@ async function main() {
         if (!url.trim()) {
             throw new Error("URL cannot be empty");
         }
-        
+
         await cloneWebsite(url.trim());
     } catch (err) {
         console.error(`\n❌ Error: ${err.message}\n`);
