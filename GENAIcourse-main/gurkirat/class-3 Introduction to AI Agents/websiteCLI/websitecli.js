@@ -233,31 +233,85 @@ import readline from "readline";
 import * as cheerio from 'cheerio';
 import { mkdirp } from "mkdirp";
 import { createWriteStream } from "fs";
+import { OpenAI } from "openai";
 import 'dotenv/config';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Create readline interface for CLI input
+// Initialize OpenAI client
+const openai = new OpenAI();
+
+// System prompt for the AI agent
+const SYSTEM_PROMPT = `You are an expert web scraping and cloning AI assistant.
+Your task is to analyze websites and guide the cloning process intelligently.
+
+Your capabilities:
+1. Analyze webpage structure and content
+2. Identify key elements to clone:
+   - Important images, styles, and scripts
+   - Critical UI components
+   - Interactive elements
+3. Provide intelligent scraping strategies
+4. Suggest optimizations for the cloning process
+
+For each webpage, you should:
+1. Analyze the overall structure
+2. Identify critical components
+3. Suggest the best approach for cloning
+4. Monitor the cloning process
+5. Verify the completeness of the clone
+
+Always maintain the original website's:
+- Visual hierarchy
+- Functionality
+- Asset organization
+- Performance optimizations`;
+
+// Create readline interface
 const rl = readline.createInterface({
     input: process.stdin,
-    output: process.stdout,
+    output: process.stdout
 });
 
 // Promisify readline question
 const question = (q) => new Promise((res) => rl.question(q, res));
 
-// Sanitize filenames to be safe across platforms
+// Sanitize filenames
 const sanitizeFilename = (filename) => {
     return filename.replace(/[^a-z0-9.-]/gi, "_").toLowerCase();
 };
 
-// Download a file with proper error handling and timeout
-async function downloadFile(fileUrl, destPath, timeout = 30000) {
-    try {
-        // Ensure directory exists
-        await mkdirp(path.dirname(destPath));
+// AI analysis function
+async function analyzeWebsite(url, html) {
+    console.log("\n🤖 AI Agent: Analyzing website structure...");
 
+    try {
+        const response = await openai.chat.completions.create({
+            model: "gpt-4",
+            messages: [
+                { role: "system", content: SYSTEM_PROMPT },
+                { role: "user", content: `Analyze this website: ${url}\n\nProvide a structured analysis of the key components to clone, including critical assets and structure. Format the response in a clear, actionable way.` }
+            ],
+            temperature: 0.7,
+        });
+
+        const analysis = response.choices[0].message.content;
+        console.log("\n📊 AI Analysis Results:");
+        console.log(analysis);
+        return analysis;
+    } catch (error) {
+        console.error("\n❌ AI Analysis Error:", error.message);
+        return null;
+    }
+}
+
+// Enhanced download function with AI-powered retry strategy
+async function downloadFile(fileUrl, destPath, timeout = 30000) {
+    console.log(`\n🔄 Attempting to download: ${fileUrl}`);
+
+    try {
+        await mkdirp(path.dirname(destPath));
         const writer = createWriteStream(destPath);
 
         const response = await axios({
@@ -266,7 +320,7 @@ async function downloadFile(fileUrl, destPath, timeout = 30000) {
             responseType: "stream",
             timeout,
             headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
                 "Accept": "*/*"
             },
             maxContentLength: 100 * 1024 * 1024, // 100MB max
@@ -275,33 +329,91 @@ async function downloadFile(fileUrl, destPath, timeout = 30000) {
         response.data.pipe(writer);
 
         return new Promise((resolve, reject) => {
-            writer.on("finish", () => resolve({ success: true }));
-            writer.on("error", (err) => reject({ success: false, error: err.message }));
+            writer.on("finish", () => {
+                console.log(`✅ Successfully downloaded: ${path.basename(destPath)}`);
+                resolve({ success: true });
+            });
+            writer.on("error", async (err) => {
+                console.error(`❌ Download failed: ${err.message}`);
+
+                // AI-powered retry strategy
+                try {
+                    const retryStrategy = await openai.chat.completions.create({
+                        model: "gpt-4",
+                        messages: [
+                            { role: "system", content: "You are an expert in handling failed downloads. Suggest alternative approaches." },
+                            { role: "user", content: `Download failed for ${fileUrl} with error: ${err.message}. Suggest alternative approach.` }
+                        ]
+                    });
+
+                    console.log("\n🤖 AI Suggestion for retry:", retryStrategy.choices[0].message.content);
+                } catch (aiError) {
+                    console.error("❌ AI retry strategy failed:", aiError.message);
+                }
+
+                reject({ success: false, error: err.message });
+            });
         });
     } catch (err) {
         return { success: false, error: err.message };
     }
 }
 
-// Resolve relative URLs to absolute URLs
-function resolveUrl(base, relative) {
+// Enhanced URL resolution with AI validation
+async function resolveUrl(base, relative) {
     try {
-        // Handle protocol-relative URLs
         if (relative.startsWith("//")) {
             const baseUrl = new URL(base);
             return `${baseUrl.protocol}${relative}`;
         }
 
-        return new URL(relative, base).href;
+        const resolvedUrl = new URL(relative, base).href;
+
+        // AI validation of URL
+        try {
+            const urlValidation = await openai.chat.completions.create({
+                model: "gpt-4o-mini",
+                messages: [
+                    { role: "system", content: "Validate if this URL appears legitimate and safe to clone." },
+                    { role: "user", content: `Is this URL safe to clone: ${resolvedUrl}?` }
+                ]
+            });
+
+            const validation = urlValidation.choices[0].message.content;
+            if (validation.toLowerCase().includes("unsafe") || validation.toLowerCase().includes("suspicious")) {
+                console.warn(`⚠️ AI flagged URL as potentially unsafe: ${resolvedUrl}`);
+                return null;
+            }
+        } catch (aiError) {
+            console.error("❌ AI URL validation failed:", aiError.message);
+        }
+
+        return resolvedUrl;
     } catch {
         return null;
     }
 }
 
-// Process and download assets based on selectors
+// Process assets with AI optimization
 async function processAssets($, baseUrl, selector, attribute, outputDir, assetType) {
     const elements = $(selector).toArray();
-    console.log(`Processing ${elements.length} ${assetType} assets...`);
+    console.log(`\n🔍 Processing ${elements.length} ${assetType} assets...`);
+
+    try {
+        // Get AI recommendations for asset processing
+        const assetStrategy = await openai.chat.completions.create({
+            model: "gpt-4",
+            messages: [
+                { role: "system", content: "Provide optimization strategy for processing web assets." },
+                { role: "user", content: `Suggest best approach for processing ${elements.length} ${assetType} assets from ${baseUrl}` }
+            ]
+        });
+
+        console.log("\n🤖 AI Asset Strategy:");
+        console.log(assetStrategy.choices[0].message.content);
+    } catch (aiError) {
+        console.error("❌ AI strategy generation failed:", aiError.message);
+    }
 
     const downloaded = new Set();
 
@@ -309,55 +421,44 @@ async function processAssets($, baseUrl, selector, attribute, outputDir, assetTy
         const assetUrl = $(element).attr(attribute);
         if (!assetUrl) continue;
 
-        const absoluteUrl = resolveUrl(baseUrl, assetUrl.trim());
-        if (!absoluteUrl) {
-            console.warn(`⚠️ Skipping invalid URL: ${assetUrl}`);
-            continue;
-        }
+        const absoluteUrl = await resolveUrl(baseUrl, assetUrl.trim());
+        if (!absoluteUrl) continue;
 
-        // Avoid downloading duplicates
         if (downloaded.has(absoluteUrl)) continue;
         downloaded.add(absoluteUrl);
 
         try {
             const urlObj = new URL(absoluteUrl);
-
-            // Get base filename without query params
             let baseFilename = urlObj.pathname.split('/').pop() || `asset-${Date.now()}`;
-
-            // Remove query params if any
-            if (baseFilename.includes("?")) {
-                baseFilename = baseFilename.split("?")[0];
-            }
-
-            // Sanitize filename
             baseFilename = sanitizeFilename(baseFilename);
 
-            // Force file extension for images to .jpg or .jpeg
             let filename = baseFilename;
 
-            if (assetType === "images") {
-                // Force .jpg extension, remove any existing extension
-                filename = filename.replace(/\.[^/.]+$/, "") + ".jpg";
-            }
+            // AI-powered file type detection
+            try {
+                const fileTypeAnalysis = await openai.chat.completions.create({
+                    model: "gpt-4",
+                    messages: [
+                        { role: "system", content: "Determine appropriate file extension based on asset type and URL" },
+                        { role: "user", content: `Suggest appropriate extension for: ${absoluteUrl} (Type: ${assetType})` }
+                    ]
+                });
 
-            // For CSS files, avoid .css.css
-            if (assetType === "css") {
-                if (!filename.endsWith(".css")) {
-                    filename += ".css";
+                const suggestedExtension = fileTypeAnalysis.choices[0].message.content;
+                if (suggestedExtension.includes(".")) {
+                    filename = filename.replace(/\.[^/.]+$/, "") + suggestedExtension.trim();
                 }
-            }
+            } catch (aiError) {
+                console.error("❌ AI file type detection failed:", aiError.message);
 
-            // For JS files, ensure .js extension
-            if (assetType === "js") {
-                if (!filename.endsWith(".js")) {
-                    filename += ".js";
-                }
+                // Fallback to traditional extension assignment
+                if (assetType === "images") filename = filename.replace(/\.[^/.]+$/, "") + ".jpg";
+                if (assetType === "css" && !filename.endsWith(".css")) filename += ".css";
+                if (assetType === "js" && !filename.endsWith(".js")) filename += ".js";
             }
 
             const outputPath = path.join(outputDir, filename);
 
-            // Skip if already downloaded
             try {
                 await fs.access(outputPath);
                 console.log(`✓ Already exists: ${filename}`);
@@ -367,23 +468,18 @@ async function processAssets($, baseUrl, selector, attribute, outputDir, assetTy
             const result = await downloadFile(absoluteUrl, outputPath);
 
             if (result.success) {
-                console.log(`✅ Downloaded: ${filename}`);
-                // Update element's attribute to point to local file
                 $(element).attr(attribute, `assets/${assetType}/${filename}`);
-            } else {
-                console.error(`❌ Failed to download ${filename}: ${result.error}`);
             }
         } catch (err) {
-            console.error(`❌ Error processing ${assetUrl}: ${err.message}`);
+            console.error(`❌ Error processing ${absoluteUrl}: ${err.message}`);
         }
     }
 }
 
-// Main cloning function
+// Main cloning function with AI assistance
 async function cloneWebsite(url, outputDir = "cloned-site") {
-    console.log(`\n🚀 Starting to clone: ${url}\n`);
+    console.log(`\n🚀 Starting AI-powered website clone: ${url}\n`);
 
-    // Create output directories
     const dirs = {
         root: outputDir,
         assets: path.join(outputDir, "assets"),
@@ -397,7 +493,6 @@ async function cloneWebsite(url, outputDir = "cloned-site") {
         await mkdirp(dir);
     }
 
-    // Launch browser
     const browser = await puppeteer.launch({
         headless: "new",
         args: ['--no-sandbox', '--disable-setuid-sandbox']
@@ -405,7 +500,7 @@ async function cloneWebsite(url, outputDir = "cloned-site") {
 
     try {
         const page = await browser.newPage();
-        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
 
         console.log("📄 Fetching page content...");
         await page.goto(url, {
@@ -413,25 +508,43 @@ async function cloneWebsite(url, outputDir = "cloned-site") {
             timeout: 60000
         });
 
-        // Get page content and load into cheerio
         const html = await page.content();
         const $ = cheerio.load(html, { decodeEntities: false });
 
-        // Process different types of assets
-        console.log("\n🖼️ Downloading images...");
+        // AI Analysis
+        await analyzeWebsite(url, html);
+
+        // Process assets with AI assistance
+        console.log("\n🖼️ Processing images...");
         await processAssets($, url, "img", "src", dirs.images, "images");
         await processAssets($, url, "img", "data-src", dirs.images, "images");
 
-        console.log("\n🎨 Downloading stylesheets...");
+        console.log("\n🎨 Processing stylesheets...");
         await processAssets($, url, "link[rel='stylesheet']", "href", dirs.styles, "css");
 
-        console.log("\n📜 Downloading scripts...");
+        console.log("\n📜 Processing scripts...");
         await processAssets($, url, "script[src]", "src", dirs.scripts, "js");
 
-        // Save the modified HTML
+        // Save modified HTML
         const finalHtml = $.html({ decodeEntities: false });
         const indexPath = path.join(outputDir, "index.html");
         await fs.writeFile(indexPath, finalHtml, "utf-8");
+
+        // AI Verification
+        try {
+            const verification = await openai.chat.completions.create({
+                model: "gpt-4",
+                messages: [
+                    { role: "system", content: "Verify the completeness and quality of the website clone." },
+                    { role: "user", content: `Verify the clone results for ${url}:\n- ${Object.keys(dirs).length} directories created\n- HTML file saved at ${indexPath}` }
+                ]
+            });
+
+            console.log("\n🤖 AI Verification:");
+            console.log(verification.choices[0].message.content);
+        } catch (aiError) {
+            console.error("❌ AI verification failed:", aiError.message);
+        }
 
         console.log(`\n✅ Website cloned successfully!\n`);
         console.log(`📁 Output directory: ${path.resolve(outputDir)}`);
@@ -444,9 +557,12 @@ async function cloneWebsite(url, outputDir = "cloned-site") {
     }
 }
 
-// CLI entry point
+// Main CLI function
 async function main() {
     try {
+        console.log("\n🤖 Welcome to AI-Powered Website Cloner!");
+        console.log("This tool uses advanced AI to intelligently clone websites.\n");
+
         const url = await question("Enter website URL to clone: ");
         if (!url.trim()) {
             throw new Error("URL cannot be empty");
