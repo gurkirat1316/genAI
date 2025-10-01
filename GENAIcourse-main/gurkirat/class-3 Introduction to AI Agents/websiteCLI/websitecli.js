@@ -288,7 +288,7 @@ async function analyzeWebsite(url, html) {
 
     try {
         const response = await openai.chat.completions.create({
-            model: "gpt-4",
+            model: "gpt-4.1-mini",
             messages: [
                 { role: "system", content: SYSTEM_PROMPT },
                 { role: "user", content: `Analyze this website: ${url}\n\nProvide a structured analysis of the key components to clone, including critical assets and structure. Format the response in a clear, actionable way.` }
@@ -500,7 +500,11 @@ async function cloneWebsite(url, outputDir = "cloned-site") {
 
     try {
         const page = await browser.newPage();
-        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
+
+        // Setting the headers directly (including the User-Agent)
+        await page.setExtraHTTPHeaders({
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        });
 
         console.log("📄 Fetching page content...");
         await page.goto(url, {
