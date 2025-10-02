@@ -339,7 +339,7 @@ async function downloadFile(fileUrl, destPath, timeout = 30000) {
                 // AI-powered retry strategy
                 try {
                     const retryStrategy = await openai.chat.completions.create({
-                        model: "gpt-4",
+                        model: "gpt-4.1-mini",
                         messages: [
                             { role: "system", content: "You are an expert in handling failed downloads. Suggest alternative approaches." },
                             { role: "user", content: `Download failed for ${fileUrl} with error: ${err.message}. Suggest alternative approach.` }
@@ -402,7 +402,7 @@ async function processAssets($, baseUrl, selector, attribute, outputDir, assetTy
     try {
         // Get AI recommendations for asset processing
         const assetStrategy = await openai.chat.completions.create({
-            model: "gpt-4",
+            model: "gpt-4.1-mini",
             messages: [
                 { role: "system", content: "Provide optimization strategy for processing web assets." },
                 { role: "user", content: `Suggest best approach for processing ${elements.length} ${assetType} assets from ${baseUrl}` }
@@ -437,7 +437,7 @@ async function processAssets($, baseUrl, selector, attribute, outputDir, assetTy
             // AI-powered file type detection
             try {
                 const fileTypeAnalysis = await openai.chat.completions.create({
-                    model: "gpt-4",
+                    model: "gpt-4.1-mini",
                     messages: [
                         { role: "system", content: "Determine appropriate file extension based on asset type and URL" },
                         { role: "user", content: `Suggest appropriate extension for: ${absoluteUrl} (Type: ${assetType})` }
@@ -537,7 +537,7 @@ async function cloneWebsite(url, outputDir = "cloned-site") {
         // AI Verification
         try {
             const verification = await openai.chat.completions.create({
-                model: "gpt-4",
+                model: "gpt-4.1-mini",
                 messages: [
                     { role: "system", content: "Verify the completeness and quality of the website clone." },
                     { role: "user", content: `Verify the clone results for ${url}:\n- ${Object.keys(dirs).length} directories created\n- HTML file saved at ${indexPath}` }
