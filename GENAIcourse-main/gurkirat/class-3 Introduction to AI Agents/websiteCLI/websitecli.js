@@ -447,8 +447,13 @@ async function processAssets($, baseUrl, selector, attribute, outputDir, assetTy
                 });
 
                 const suggestedExtension = fileTypeAnalysis.choices[0].message.content;
-                if (suggestedExtension.includes(".")) {
-                    filename = filename.replace(/\.[^/.]+$/, "") + suggestedExtension.trim();
+
+                // Extract the first .xxx extension from the response using regex
+                const extensionMatch = suggestedExtension.match(/\.\w+/);
+                let extension = extensionMatch ? extensionMatch[0] : "";
+
+                if (extension) {
+                    filename = filename.replace(/\.[^/.]+$/, "") + extension;
                 }
             } catch (aiError) {
                 console.error("❌ AI file type detection failed:", aiError.message);
@@ -566,7 +571,7 @@ async function cloneWebsite(url, outputDir = "cloned-site") {
 // Main CLI function
 async function main() {
     try {
-        console.clear(); // Clear the terminal for a cleaner UI
+        console.clear();
 
         // Display big fancy text
         const banner = figlet.textSync("Website Cloner CLI", {
