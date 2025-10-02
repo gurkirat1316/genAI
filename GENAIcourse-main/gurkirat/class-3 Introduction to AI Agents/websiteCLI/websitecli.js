@@ -235,6 +235,8 @@ import { mkdirp } from "mkdirp";
 import { createWriteStream } from "fs";
 import { OpenAI } from "openai";
 import 'dotenv/config';
+import figlet from "figlet";
+import chalk from "chalk";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -564,17 +566,38 @@ async function cloneWebsite(url, outputDir = "cloned-site") {
 // Main CLI function
 async function main() {
     try {
-        console.log("\n🤖 Welcome to AI-Powered Website Cloner!");
-        console.log("This tool uses advanced AI to intelligently clone websites.\n");
+        console.clear(); // Clear the terminal for a cleaner UI
 
-        const url = await question("Enter website URL to clone: ");
+        // Display big fancy text
+        const banner = figlet.textSync("Website Cloner CLI", {
+            font: "Standard", // You can change the font if desired
+            horizontalLayout: "default",
+            verticalLayout: "default",
+            width: 100,
+            whitespaceBreak: true,
+        });
+
+        console.log(chalk.cyanBright(banner));
+
+        // Additional description
+        console.log(chalk.greenBright("\n🤖 Welcome to the AI-Powered Website Cloner!"));
+        console.log(chalk.yellow("This tool uses OpenAI + Puppeteer to intelligently clone websites.\n"));
+
+        console.log(chalk.magentaBright("Capabilities:"));
+        console.log(chalk.white(`  - 🔍 Analyze page structure with AI`));
+        console.log(chalk.white(`  - 🖼️ Download and organize assets (images, CSS, JS)`));
+        console.log(chalk.white(`  - 🧠 Use AI to optimize and verify cloned pages`));
+        console.log(chalk.white(`  - 📦 Save everything into a structured folder\n`));
+
+        const url = await question(chalk.blue("🌐 Enter website URL to clone: "));
         if (!url.trim()) {
             throw new Error("URL cannot be empty");
         }
 
         await cloneWebsite(url.trim());
+
     } catch (err) {
-        console.error(`\n❌ Error: ${err.message}\n`);
+        console.error(chalk.red(`\n❌ Error: ${err.message}\n`));
     } finally {
         rl.close();
     }
