@@ -5,9 +5,10 @@ import { useState } from 'react';
 interface ModalProps {
     isOpen: boolean;
     onClose: () => void;
+    onFileUploaded?: (fileName: string) => void; 
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onFileUploaded }) => {
     if (!isOpen) return null;
 
     const [text, setText] = useState('');
@@ -41,6 +42,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
 
             if (res.ok) {
                 alert("File uploaded and indexed successfully!");
+                onFileUploaded?.(file.name);
                 onClose();
             } else {
                 alert(data.message || "Error during file upload");

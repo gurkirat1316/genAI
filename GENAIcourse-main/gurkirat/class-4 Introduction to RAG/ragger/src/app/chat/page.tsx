@@ -8,9 +8,14 @@ const Modal = dynamic(() => import('@/components/Modal'), { ssr: false });
 
 export default function Chat() {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [sources, setSources] = useState<string[]>([]);
 
     const handleOpenModal = () => setIsModalOpen(true);
     const handleCloseModal = () => setIsModalOpen(false);
+
+    const handleFileUploaded = (fileName: string) => {
+        setSources(prev => [...prev, fileName]);
+    };
 
     return (
         <>
@@ -27,15 +32,30 @@ export default function Chat() {
                                 + Add New Source
                             </button>
                         </div>
-                        <div>Sources</div>
+                        <div className="mt-4">
+                            <h3 className="text-lg font-semibold mb-2">Sources</h3>
+                            <div className="space-y-2">
+                                {sources.length === 0 ? (
+                                    <p className="text-gray-500 text-sm">No sources uploaded yet</p>
+                                ) : (
+                                    sources.map((file, index) => (
+                                        <div key={index} className="p-2 bg-white shadow rounded-md text-sm text-gray-800">
+                                            {file}
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
                     </div>
-                    <div className="flex-none basis-[35%] bg-red-400">summary</div>
+                    <div className="flex-none basis-[35%] bg-red-400">
+                        <div className="p-2 bg-amber-300 mt-4 text-center text-2xl">AI Summary</div>
+                    </div>
                     <div className="flex-none basis-[40%] bg-red-50">
                         chat
                     </div>
                 </div>
             </div>
-            <Modal isOpen={isModalOpen} onClose={handleCloseModal} />
+            <Modal isOpen={isModalOpen} onClose={handleCloseModal} onFileUploaded={handleFileUploaded} />
         </>
     );
 }
