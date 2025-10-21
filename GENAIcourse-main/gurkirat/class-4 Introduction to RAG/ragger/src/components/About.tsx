@@ -1,5 +1,3 @@
-"use client"
-
 import React from 'react';
 import { CardHoverEffectDemo } from './AboutCard';
 import Foot from './Foot';
